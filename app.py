@@ -55,9 +55,54 @@ def get_progress_bar(board):
 
     return f"[{x_bar}{o_bar}]"
 
+def get_possible_moves(board):
+    return [i for i in range(len(board)) if board[i] == ' ']
+
+def minimax(board, player, isMaximizer):
+    # Heuristic
+    other_player = 'L' if player == 'H' else 'H'
+    if check_win(board, player):
+        return 1
+    if check_win(board, other_player):
+        return -1
+    if is_board_full(board):
+        return 0
+    
+    # Maximizer
+    if isMaximizer:
+        value = float("-inf")
+        for i in get_possible_moves(board):
+            board[i] = player  # Apply move
+            value = max(value, minimax(board, other_player, False))  # Maximum value of minimizers
+            board[i] = ' '  # Undo move
+        return value
+
+    # Minimizer
+    value = float("inf")
+    for i in get_possible_moves(board):
+        board[i] = player  # Apply move
+        value = min(value, minimax(board, other_player, True))  # Minimizer value of maximizers
+        board[i] = ' '  # Undo move
+    return value
+
+def get_best_move(board, player):
+    best_value = float("-inf")
+    best_move = None
+
+    for i in get_possible_moves(board):
+        board[i] = player # Apply move
+        value = minimax(board, player, True)
+        board[i] = ' ' # Undo move
+        
+        if value > best_value:
+            best_value = value
+            best_move = i
+
+    return best_move
+
 def main():
     board = [' '] * 9
-    current_player = 'L'
+    current_player = 'H'
     
     while True:
         print_board(board)
@@ -65,12 +110,15 @@ def main():
         if is_board_full(board):
             print("\nIt's a draw!")
             break
-        
-        move = input(f"\nPlayer {current_player}, enter your move (row column): ")
+    
         try:
-            row, col = map(int, move.split())
-            index = (row - 1) * 3 + (col - 1)
-            
+            if current_player == 'H':
+                move = input(f"\nPlayer {current_player}, enter your move (row column): ")
+                row, col = map(int, move.split())
+                index = (row - 1) * 3 + (col - 1)
+            else:
+                index = get_best_move(board, current_player)
+
             if board[index] == ' ':
                 board[index] = current_player
                 if check_win(board, current_player):
